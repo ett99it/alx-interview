@@ -15,162 +15,92 @@ The program should print every possible solution to the problem.
     You don’t have to print the solutions in a specific order.
 You are only allowed to import the sys module.
 """
-import sys
+global N
+N = 4
 
 
-# List to store all solutions to the N-Queens problem
-solutions = []
-
-# n value to store the number of queens
-n = 0
-
-# pos value to store all possible positions on the chessboard
-pos = None
+def printSolution(board):
+    for i in range(N):
+        for j in range(N):
+            print(board[i][j], end=' ')
+        print()
 
 
-def get_input():
-    """Retrieves input from user and validates it.
+# A utility function to check if a queen can
+# be placed on board[row][col]. Note that this
+# function is called when "col" queens are
+# already placed in columns from 0 to col -1.
+# So we need to check only left side for
+# attacking queens
+def isSafe(board, row, col):
+    # Check this row on left side
+    for i in range(col):
+        if board[row][i] == 1:
+            return False
 
-    Returns:
-        n (int): The number of queens.
-    """
-    global n
-    n = 0
-    # Check if the user has provided the correct number of arguments
-    if len(sys.argv) != 2:
-        print("Usage: nqueens N")
-        sys.exit(1)
-    # Check if the input is a number
-    try:
-        n = int(sys.argv[1])
-    except Exception:
-        print("N must be a number")
-        sys.exit(1)
-    # Check if the input is greater than or equal to 4
-    if n < 4:
-        print("N must be at least 4")
-        sys.exit(1)
-    return n
+    # Check upper diagonal on left side
+    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+        if board[i][j] == 1:
+            return False
+
+    # Check lower diagonal on left side
+    for i, j in zip(range(row, N, 1), range(col, -1, -1)):
+        if board[i][j] == 1:
+            return False
+
+    return True
 
 
-def is_attacking(pos0, pos1):
-    """Checks if the positions of two queens are in an attacking mode.
-
-    Args:
-        pos0 (list or tuple): The position of the first queen.
-        pos1 (list or tuple): The position of the second queen.
-
-    Returns:
-        bool: True if the queens are attacking each other, False otherwise.
-    """
-    # Check if the queens are in the same row or column
-    if (pos0[0] == pos1[0]) or (pos0[1] == pos1[1]):
+def solveNQUtil(board, col):
+    # base case: If all queens are placed
+    # then return true
+    if col >= N:
         return True
-    # Check if the queens are in the same diagonal
-    return abs(pos0[0] - pos1[0]) == abs(pos0[1] - pos1[1])
 
+    # Consider this column and try placing
+    # this queen in all rows one by one
+    for i in range(N):
 
-def group_exists(group):
-    """Checks if the given group is already in the solutions list.
+        if isSafe(board, i, col):
+            # Place this queen in board[i][col]
+            board[i][col] = 1
 
-    Args:
-        group (list): A list of tuples, representing the positions of the
-        queens.
+            # recur to place rest of the queens
+            if solveNQUtil(board, col + 1) == True:
+                return True
 
-    Returns:
-        bool: True if it exists, otherwise False.
-    """
-    # global variable to access the solutions list
-    global solutions
+            # If placing queen in board[i][col
+            # doesn't lead to a solution, then
+            # queen from board[i][col]
+            board[i][col] = 0
 
-    # Loop through all the solutions in the solutions list
-    for stn in solutions:
-        # Counter to check the number of matching positions
-        i = 0
-        # Loop through all positions in the current solution
-        for stn_pos in stn:
-            # Loop through all positions in the given group
-            for grp_pos in group:
-                # If a match is found, increment the counter
-                if stn_pos[0] == grp_pos[0] and stn_pos[1] == grp_pos[1]:
-                    i += 1
-        # If the number of matching positions is equal to the board size,
-        # the group is already in the solutions list
-        if i == n:
-            return True
-    # If no match is found, the group is not in the solutions list
+    # if the queen can not be placed in any row in
+    # this column col  then return false
     return False
 
 
-def build_solution(row, group):
-    """Recursively build the solutions by adding queens to the board.
+# This function solves the N Queen problem using
+# Backtracking. It mainly uses solveNQUtil() to
+# solve the problem. It returns false if queens
+# cannot be placed, otherwise return true and
+# placement of queens in the form of 1s.
+# note that there may be more than one
+# solutions, this function prints one  of the
+# feasible solutions.
+def solveNQ():
+    board = [[0, 0, 0, 0],
+             [0, 0, 0, 0],
+             [0, 0, 0, 0],
+             [0, 0, 0, 0]
+             ]
 
-    Args:
-        row (int): The current row on the chessboard.
-        group (list): A list of tuples, representing the positions of queens.
+    if solveNQUtil(board, 0) == False:
+        print("Solution does not exist")
+        return False
 
-    Returns:
-        None: The function modifies the global solutions list.
-    """
-    # Access the global solutions and n variables
-    global solutions
-    global n
-    # Base case: if all rows have been processed, the solution is complete
-    if row == n:
-        # Create a copy of the current solution
-        tmp0 = group.copy()
-        # Check if the solution already exists in the solutions list
-        if not group_exists(tmp0):
-            # If not, add the solution to the solutions list
-            solutions.append(tmp0)
-    # Recursive case: if the solution is not complete, keep building it
-    else:
-        # Loop through each column in the current row
-        for col in range(n):
-            # Calculate the position index
-            a = (row * n) + col
-            # Zip the position at the index with the current solution group
-            matches = zip(list([pos[a]]) * len(group), group)
-            # Check if any of the positions in the current solution group are
-            # attacking the position at the index
-            used_positions = map(lambda x: is_attacking(x[0], x[1]), matches)
-            # If there is no attacking queen, add the position to the current
-            # solution group
-            group.append(pos[a].copy())
-            # Check if any of the positions in the current solution group are
-            # attacking
-            if not any(used_positions):
-                # If not, move on to the next row & keep building the solution
-                build_solution(row + 1, group)
-            # Remove the queen from the group before trying the next column
-            group.pop(len(group) - 1)
+    printSolution(board)
+    return True
 
 
-def get_solutions():
-    """Generates all possible solutions to the N queens problem by building
-    each solution recursively.
-
-    Returns:
-        None
-    """
-    global pos, n
-    # Map each of the N^2 positions to their respective row and column indices
-    pos = list(map(lambda x: [x // n, x % n], range(n ** 2)))
-    # Initialize a eand group variables
-    a = 0
-    group = []
-    # Call build_solution function to build all the solutions
-    build_solution(a, group)
-
-
-# Get the input value of N from the command line arguments
-n = get_input()
-
-# Call the function to find all the solutions of N-queens problem
-get_solutions()
-
-# Loop through all the solutions found
-for solution in solutions:
-    # Print each solution, represented as a list of positions of queens on
-    # the board
-    print(solution)
+# driver program to test above function
+solveNQ()
