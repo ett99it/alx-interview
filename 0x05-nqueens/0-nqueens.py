@@ -15,92 +15,67 @@ The program should print every possible solution to the problem.
     You don’t have to print the solutions in a specific order.
 You are only allowed to import the sys module.
 """
-global N
-N = 4
+import sys
 
 
-def printSolution(board):
-    for i in range(N):
-        for j in range(N):
-            print(board[i][j], end=' ')
-        print()
+def backtrack(r, n, cols, pos, neg, board):
+    """
+    backtrack function to find solution
+    """
+    if r == n:
+        res = []
+        for l in range(len(board)):
+            for k in range(len(board[l])):
+                if board[l][k] == 1:
+                    res.append([l, k])
+        print(res)
+        return
+
+    for c in range(n):
+        if c in cols or (r + c) in pos or (r - c) in neg:
+            continue
+
+        cols.add(c)
+        pos.add(r + c)
+        neg.add(r - c)
+        board[r][c] = 1
+
+        backtrack(r+1, n, cols, pos, neg, board)
+
+        cols.remove(c)
+        pos.remove(r + c)
+        neg.remove(r - c)
+        board[r][c] = 0
 
 
-# A utility function to check if a queen can
-# be placed on board[row][col]. Note that this
-# function is called when "col" queens are
-# already placed in columns from 0 to col -1.
-# So we need to check only left side for
-# attacking queens
-def isSafe(board, row, col):
-    # Check this row on left side
-    for i in range(col):
-        if board[row][i] == 1:
-            return False
+def nqueens(n):
+    """
+    Solution to nqueens problem
+    Args:
+        n (int): number of queens. Must be >= 4
+    Return:
+        List of lists representing coordinates of each
+        queen for all possible solutions
+    """
+    cols = set()
+    pos_diag = set()
+    neg_diag = set()
+    board = [[0] * n for i in range(n)]
 
-    # Check upper diagonal on left side
-    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
-        if board[i][j] == 1:
-            return False
-
-    # Check lower diagonal on left side
-    for i, j in zip(range(row, N, 1), range(col, -1, -1)):
-        if board[i][j] == 1:
-            return False
-
-    return True
+    backtrack(0, n, cols, pos_diag, neg_diag, board)
 
 
-def solveNQUtil(board, col):
-    # base case: If all queens are placed
-    # then return true
-    if col >= N:
-        return True
-
-    # Consider this column and try placing
-    # this queen in all rows one by one
-    for i in range(N):
-
-        if isSafe(board, i, col):
-            # Place this queen in board[i][col]
-            board[i][col] = 1
-
-            # recur to place rest of the queens
-            if solveNQUtil(board, col + 1) == True:
-                return True
-
-            # If placing queen in board[i][col
-            # doesn't lead to a solution, then
-            # queen from board[i][col]
-            board[i][col] = 0
-
-    # if the queen can not be placed in any row in
-    # this column col  then return false
-    return False
-
-
-# This function solves the N Queen problem using
-# Backtracking. It mainly uses solveNQUtil() to
-# solve the problem. It returns false if queens
-# cannot be placed, otherwise return true and
-# placement of queens in the form of 1s.
-# note that there may be more than one
-# solutions, this function prints one  of the
-# feasible solutions.
-def solveNQ():
-    board = [[0, 0, 0, 0],
-             [0, 0, 0, 0],
-             [0, 0, 0, 0],
-             [0, 0, 0, 0]
-             ]
-
-    if solveNQUtil(board, 0) == False:
-        print("Solution does not exist")
-        return False
-
-    printSolution(board)
-    return True
-
-
-# driver program to test above function
-solveNQ()
+if __name__ == "__main__":
+    n = sys.argv
+    if len(n) != 2:
+        print("Usage: nqueens N")
+        sys.exit(1)
+    try:
+        nn = int(n[1])
+        if nn < 4:
+            print("N must be at least 4")
+            sys.exit(1)
+        nqueens(nn)
+    except ValueError:
+        print("N must be a number")
+        sys.exit(1)
